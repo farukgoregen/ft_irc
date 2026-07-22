@@ -17,13 +17,13 @@ Server::~Server() {
 
 void Server::signalHandler(int signum) {
     (void)signum;
-    std::cout << "\n[Sinyal Yakalandı] Sunucu kapatılıyor..." << std::endl;
+    std::cout << "\n[Signal Caught] Server shutting down..." << std::endl;
     Server::_signal = true;
 }
 
 void Server::setNonBlocking(int fd) {
     if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0) {
-        std::cerr << "Hata: fcntl O_NONBLOCK ayarlanamadı! (fd: " << fd << ")" << std::endl;
+        std::cerr << "Error: Failed to set fcntl O_NONBLOCK! (fd: " << fd << ")" << std::endl;
     }
 }
 
@@ -31,12 +31,12 @@ void Server::init() {
     // 1. Soket Oluşturma
     _serverFd = socket(AF_INET, SOCK_STREAM, 0);
     if (_serverFd < 0)
-        throw std::runtime_error("Soket oluşturulamadı!");
+        throw std::runtime_error("Failed to create socket!");
 
     // 2. SO_REUSEADDR (Portun hızlıca tekrar kullanılabilmesi için)
     int opt = 1;
     if (setsockopt(_serverFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
-        throw std::runtime_error("setsockopt hatası!");
+        throw std::runtime_error("setsockopt error!");
 
     // 3. Non-blocking Moda Alma
     setNonBlocking(_serverFd);
@@ -50,11 +50,11 @@ void Server::init() {
 
     // 5. Bind
     if (bind(_serverFd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
-        throw std::runtime_error("Bind hatası! Port kullanımda olabilir.");
+        throw std::runtime_error("Bind error! Port might be in use.");
 
     // 6. Listen
     if (listen(_serverFd, SOMAXCONN) < 0)
-        throw std::runtime_error("Listen hatası!");
+        throw std::runtime_error("Listen error!");
 
     // 7. Master Soketi Poll Listesine Ekle
     pollfd serverPollFd;
@@ -63,7 +63,7 @@ void Server::init() {
     serverPollFd.revents = 0;
     _pollFds.push_back(serverPollFd);
 
-    std::cout << "IRC Sunucusu " << _port << " portunda dinlemede..." << std::endl;
+    std::cout << "IRC Server listening on port " << _port << "..." << std::endl;
 }
 
 void Server::run() {
@@ -75,7 +75,7 @@ void Server::run() {
         // I/O Multiplexing - Tek poll() döngüsü
         int pollCount = poll(&_pollFds[0], _pollFds.size(), -1);
         if (pollCount < 0 && Server::_signal == false) {
-            std::cerr << "Poll hatası!" << std::endl;
+            std::cerr << "Poll error!" << std::endl;
             break;
         }
 
@@ -91,7 +91,7 @@ void Server::run() {
     }
 
     // Döngü bittiğinde (Ctrl+C basıldığında) temizlik
-    std::cout << "Tüm soketler kapatılıyor." << std::endl;
+    std::cout << "Closing all sockets." << std::endl;
 }
 
 void Server::acceptNewClient() {
@@ -115,7 +115,7 @@ void Server::acceptNewClient() {
      *  _clients[clientFd] = new Client(clientFd);
      * ------------------------------------------------------------- */
 
-    std::cout << "[Network] Yeni istemci bağlandı! Soket fd: " << clientFd << std::endl;
+    std::cout << "[Network] New client connected! Socket fd: " << clientFd << std::endl;
 }
 
 void Server::handleClientData(int clientFd, size_t pollIdx) {
@@ -143,11 +143,11 @@ void Server::handleClientData(int clientFd, size_t pollIdx) {
      *     }
      * ------------------------------------------------------------- */
 
-    std::cout << "[Ham Veri - fd " << clientFd << "]: " << buffer;
+    std::cout << "[Raw Data - fd " << clientFd << "]: " << buffer;
 }
 
 void Server::disconnectClient(int clientFd, size_t pollIdx) {
-    std::cout << "[Network] İstemci ayrıldı. Soket fd: " << clientFd << std::endl;
+    std::cout << "[Network] Client disconnected. Socket fd: " << clientFd << std::endl;
     close(clientFd);
     _pollFds.erase(_pollFds.begin() + pollIdx);
 

@@ -2,7 +2,7 @@
 
 int main(int argc, char** argv) {
     if (argc != 3) {
-        std::cerr << "Kullanım: " << argv[0] << " <port> <password>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <port> <password>" << std::endl;
         return 1;
     }
 
@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
     std::string password = argv[2];
 
     if (port <= 0 || port > 65535) {
-        std::cerr << "Hata: Geçersiz port numarası!" << std::endl;
+        std::cerr << "Error: Invalid port number!" << std::endl;
         return 1;
     }
 
@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
         server.init();
         server.run();
     } catch (const std::exception& e) {
-        std::cerr << "Kritik Hata: " << e.what() << std::endl;
+        std::cerr << "Critical Error: " << e.what() << std::endl;
         return 1;
     }
 

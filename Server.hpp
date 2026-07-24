@@ -16,7 +16,7 @@
 #include "Client.hpp"
 #include "Channel.hpp"
 
-// User B'nin yazacağı sınıflar için Forward Declaration
+class Commands; // Forward declaration
 
 class Server {
 private:
@@ -26,12 +26,10 @@ private:
     std::vector<pollfd>     _pollFds;
     std::map<int, Client*>          _clients;
     std::map<std::string, Channel*> channels;
+    Commands*               _cmdHandler; // User C Entegrasyonu
 
-
-    // Sinyal yönetimi (Ctrl+C için)
     static bool             _signal;
 
-    // İç Network Metotları
     void setNonBlocking(int fd);
     void acceptNewClient();
     void handleClientData(int clientFd, size_t pollIdx);
@@ -40,13 +38,10 @@ private:
 public:
     Server(int port, const std::string& password);
     ~Server();
-
     static void signalHandler(int signum);
+    void init();
+    void run();
 
-    void init(); // Soket oluşturma, bind, listen
-    void run();  // Ana poll() döngüsü
-    
-    // I/O Yardımcı Fonksiyonları
     void sendData(int clientFd, const std::string& message);
 };
 

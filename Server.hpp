@@ -13,9 +13,10 @@
 #include <cstring>
 #include <cstdlib>
 #include <csignal>
+#include "Client.hpp"
+#include "Channel.hpp"
 
 // User B'nin yazacağı sınıflar için Forward Declaration
-class Client;
 
 class Server {
 private:
@@ -23,10 +24,9 @@ private:
     std::string             _password;
     int                     _serverFd;
     std::vector<pollfd>     _pollFds;
+    std::map<int, Client*>          _clients;
+    std::map<std::string, Channel*> channels;
 
-    // USER B ENTEGRASYON NOKTASI:
-    // User B kendi Client sınıfını yazdığında istemciler burada tutulacak.
-    std::map<int, Client*>  _clients;
 
     // Sinyal yönetimi (Ctrl+C için)
     static bool             _signal;

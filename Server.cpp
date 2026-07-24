@@ -112,8 +112,8 @@ void Server::acceptNewClient() {
     /* -------------------------------------------------------------
      *  USER B ENTEGRASYON NOKTASI:
      *  User B Client sınıfını tamamladığında burayı açacak:
-     *  _clients[clientFd] = new Client(clientFd);
      * ------------------------------------------------------------- */
+      _clients[clientFd] = new Client(clientFd);
 
     std::cout << "[Network] New client connected! Socket fd: " << clientFd << std::endl;
 }
@@ -130,19 +130,20 @@ void Server::handleClientData(int clientFd, size_t pollIdx) {
         return;
     }
 
-    /* -------------------------------------------------------------
-     *  USER B VE C ENTEGRASYON NOKTASI:
-     *  1. Gelen parçalı veriyi istemcinin tamponuna ekleme:
-     *     _clients[clientFd]->appendBuffer(std::string(buffer, bytesRead));
-     *  
-     *  2. '\r\n' veya '\n' ayıklama:
-     *     while (_clients[clientFd]->hasCompleteCommand()) {
-     *         std::string cmd = _clients[clientFd]->extractCommand();
-     *         // USER C -> Command Handler çalıştırma:
-     *         executeCommand(clientFd, cmd);
-     *     }
-     * ------------------------------------------------------------- */
-
+    _clients[clientFd]->appendBuffer(std::string(buffer, bytesRead));
+    while (_clients[clientFd]->hasCompleteCommand()) {
+        std::string cmd = _clients[clientFd]->extractCommand();
+        std::cout << "[Command Ready - fd " << clientFd << "]: " << cmd << std::endl;
+    }
+        /* =============================================================
+         *  >>> USER C ENTEGRASYON NOKTASI <<<
+         *  User C, komut ayrıştırıcı (parser) ve çalıştırıcı (executor) 
+         *  sınıflarını yazdığında 'cmd' değişkenini doğrudan burada 
+         *  kendi fonksiyonuna gönderecek.
+         *  
+         *  Örnek kullanım:
+         *  commandHandler.execute(clientFd, cmd);
+         * ============================================================= */
     std::cout << "[Raw Data - fd " << clientFd << "]: " << buffer;
 }
 
@@ -153,11 +154,11 @@ void Server::disconnectClient(int clientFd, size_t pollIdx) {
 
     /* -------------------------------------------------------------
      *  USER B ENTEGRASYON NOKTASI:
-     *  if (_clients.count(clientFd)) {
-     *      delete _clients[clientFd];
-     *      _clients.erase(clientFd);
-     *  }
      * ------------------------------------------------------------- */
+    if (_clients.count(clientFd)) {
+        delete _clients[clientFd];
+        _clients.erase(clientFd);
+    }
 }
 
 void Server::sendData(int clientFd, const std::string& message) {

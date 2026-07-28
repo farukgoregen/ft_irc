@@ -132,7 +132,17 @@ void Server::disconnectClient(int clientFd, size_t pollIdx) {
     _pollFds.erase(_pollFds.begin() + pollIdx);
 
     if (_clients.count(clientFd)) {
-        delete _clients[clientFd];
+        Client* clientToDisconnect = _clients[clientFd];
+
+        // >>> EKSİK OLAN HAYATİ KISIM: Kullanıcıyı odalardan temizle (Crash Önleyici) <<<
+        for (std::map<std::string, Channel*>::iterator it = channels.begin(); it != channels.end(); ++it) {
+            if (it->second->isMember(clientToDisconnect)) {
+                it->second->removeClient(clientToDisconnect);
+            }
+        }
+        // >>> TEMİZLİK BİTTİ <<<
+
+        delete clientToDisconnect; // Artık güvenle silebiliriz
         _clients.erase(clientFd);
     }
 }

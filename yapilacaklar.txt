@@ -1,0 +1,2 @@
+RFC standartlarına (sanırım bir RFC 2812 kullanıyoruz) bakılacak hata kodlarından emin olunacak
+

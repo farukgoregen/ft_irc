@@ -39,11 +39,16 @@ public:
     
     // Kanal Modları (Getter ve Setter) 
     size_t getUserLimit() const; 
+    size_t getMemberCount() const;
     void setUserLimit(size_t limit); 
     bool getInviteOnly() const; 
     void setInviteOnly(bool invite); 
     bool getTopicOpOnly() const; 
     void setTopicOpOnly(bool opOnly); 
+    void setKey(const std::string& newKey);
+    void addInvite(const std::string& nick);
+    bool isInvited(const std::string& nick) const;
+    void removeInvite(const std::string& nick);
     
     // Kanaldaki Herkese Mesaj Gönderme 
     void broadcast(const std::string& message, Client* sender); 

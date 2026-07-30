@@ -29,6 +29,7 @@ class Commands
 		void handleTopic(Client* client, const std::vector<std::string>& args, std::map<std::string, Channel*>& channels);
 		void handleMode(Client* client, const std::vector<std::string>& args, std::map<std::string, Channel*>& channels);
 		void handlePing(Client* client, const std::vector<std::string>& args);
+		void handlePart(Client* client, const std::vector<std::string>& args, std::map<std::string, Channel*>& channels);
 	
 	public:
 		Commands(Server* server);

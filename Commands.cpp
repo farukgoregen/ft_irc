@@ -78,6 +78,8 @@ void Commands::execute(int clientFd, const std::string& rawCmd, std::map<int, Cl
 		handleInvite(client, args, clients, channels); 
 	else if (cmd == "TOPIC") 
 		handleTopic(client, args, channels); 
+	else if (cmd == "PART") 
+        handlePart(client, args, channels);
 	else if (cmd == "MODE") 
 		handleMode(client, args, channels);
 	else if (cmd == "PING")
@@ -157,145 +159,175 @@ void Commands::handleUser(Client* client, const std::vector<std::string>& args)
 	} 
 }
 
-void Commands::handleJoin(Client* client, const std::vector<std::string>& args, std::map<std::string, Channel*>& channels) 
-{
-	if (args.size() < 2)
-	{ 
-		sendReply(client->getFd(), "461 JOIN :Not enough parameters"); 
-		return; 
-	} 
-	
-	std::string chName = args[1]; 
+void Commands::handleJoin(Client* client, const std::vector<std::string>& args, std::map<std::string, Channel*>& channels) {
+    if (args.size() < 2) {
+        sendReply(client->getFd(), "461 JOIN :Not enough parameters");  
+        return;  
+    }
+    std::string chName = args[1];  
+    if (chName[0] != '#') {
+        sendReply(client->getFd(), "476 " + chName + " :Bad Channel Mask");  
+        return;  
+    }
 
-	if (chName[0] != '#')
-	{ 
-		sendReply(client->getFd(), "476 " + chName + " :Bad Channel Mask"); 
-		return; 
-	} 
-	
-	if (channels.find(chName) == channels.end())
-	{ 
-		channels[chName] = new Channel(chName); 
-		channels[chName]->addClient(client); 
-		channels[chName]->addOperator(client); // Ilk giren operatör olur 
-	}
-	else
-	{ 
-		Channel* ch = channels[chName]; 
-		
-		if (ch->getInviteOnly())
-		{ 
-			sendReply(client->getFd(), "473 " + chName + " :Cannot join channel (+i)"); 
-			return; 
-		} 
-		// User B'nin eklediği Şifre Kontrolü Düzeltmesi
-		if (!ch->getKey().empty())
-		{ 
-			if (args.size() < 3 || args[2] != ch->getKey())
-			{
-				sendReply(client->getFd(), "475 " + chName + " :Cannot join channel (+k)"); 
-				return; 
-			} 
-		}
-		ch->addClient(client); 
-	} 
-	// User B'nin eklediği Broadcast Düzeltmesi
-	std::string joinMsg = ":" + client->getNickname() + " JOIN :" + chName; 
-	channels[chName]->broadcast(joinMsg + "\r\n", client); 
-	sendReply(client->getFd(), joinMsg);
+    if (channels.find(chName) == channels.end()) {
+        channels[chName] = new Channel(chName);  
+        channels[chName]->addClient(client);  
+        channels[chName]->addOperator(client); 
+    } else {
+        Channel* ch = channels[chName];  
+        
+        // Davetiye (Invite) Kontrolü
+        if (ch->getInviteOnly() && !ch->isInvited(client->getNickname())) {
+            sendReply(client->getFd(), "473 " + chName + " :Cannot join channel (+i)");  
+            return;  
+        }
+        
+        // Şifre Kontrolü (Düzeltilen Parantez Bloğu)
+        if (!ch->getKey().empty()) {
+            if (args.size() < 3 || args[2] != ch->getKey()) {
+                sendReply(client->getFd(), "475 " + chName + " :Cannot join channel (+k)");  
+                return;  
+            }
+        }
+		if (ch->getUserLimit() > 0 && ch->getMemberCount() >= ch->getUserLimit()) {
+            sendReply(client->getFd(), "471 " + chName + " :Cannot join channel (+l)");
+            return;
+        }
+        
+        ch->addClient(client);  
+        if (ch->getInviteOnly()) {
+            ch->removeInvite(client->getNickname()); // Girdiğinde daveti sil
+        }
+    }
+
+    std::string joinMsg = ":" + client->getNickname() + " JOIN :" + chName;  
+    channels[chName]->broadcast(joinMsg + "\r\n", client);  
+    sendReply(client->getFd(), joinMsg); 
 }
 
-void Commands::handlePrivmsg(Client* client, const std::vector<std::string>& args, std::map<int, Client*>& clients, std::map<std::string, Channel*>& channels)
-{ 
-	if (args.size() < 3)
-	{ 
-		sendReply(client->getFd(), "461 PRIVMSG :Not enough parameters"); 
-		return; 
-	} 
-
-	std::string target = args[1]; 
-	std::string msg = args[2]; 
-
-	for (size_t i = 3; i < args.size(); ++i)
-		msg += " " + args[i]; 
-	
-	if (target[0] == '#')
-	{ 
-		if (channels.find(target) != channels.end()) 
-			channels[target]->broadcast(":" + client->getNickname() + " PRIVMSG " + target + " " + msg + "\r\n", client); 
-		else
-			sendReply(client->getFd(), "403 " + target + " :No such channel"); 
-	}
-	else
-	{ 
-		bool found = false; 
-		for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
-		{ 
-			if (it->second->getNickname() == target)
-			{ 
-				sendReply(it->second->getFd(), ":" + client->getNickname() + " PRIVMSG " + target + " " + msg); 
-				found = true; 
-				break; 
-			} 
-		} 
-		if (!found)
-			sendReply(client->getFd(), "401 " + target + " :No such nick/channel"); 
-	} 
+void Commands::handlePrivmsg(Client* client, const std::vector<std::string>& args, std::map<int, Client*>& clients, std::map<std::string, Channel*>& channels) {
+    if (args.size() < 3) {
+        sendReply(client->getFd(), "461 PRIVMSG :Not enough parameters");  
+        return;  
+    }
+    
+    std::string target = args[1];  
+    std::string msg = args[2];  
+    for (size_t i = 3; i < args.size(); ++i) {
+        msg += " " + args[i];  
+    }
+    
+    if (target[0] == '#') {
+        if (channels.find(target) != channels.end()) {
+            Channel* ch = channels[target];
+            
+            // YENİ EKLENEN KONTROL: Mesajı atan kişi bu kanalın üyesi mi?
+            if (!ch->isMember(client)) {
+                sendReply(client->getFd(), "404 " + target + " :Cannot send to channel");
+                return;
+            }
+            
+            ch->broadcast(":" + client->getNickname() + " PRIVMSG " + target + " " + msg + "\r\n", client);  
+        } else {
+            sendReply(client->getFd(), "403 " + target + " :No such channel");  
+        }
+    } else {
+        bool found = false;  
+        for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it) {
+            if (it->second->getNickname() == target) {
+                sendReply(it->second->getFd(), ":" + client->getNickname() + " PRIVMSG " + target + " " + msg);  
+                found = true;  
+                break;  
+            }
+        }
+        if (!found) {
+            sendReply(client->getFd(), "401 " + target + " :No such nick/channel");  
+        }
+    }
 }
 
-void Commands::handleKick(Client* client, const std::vector<std::string>& args, std::map<std::string, Channel*>& channels)
-{ 
-	if (args.size() < 3)
-	{ 
-		sendReply(client->getFd(), "461 KICK :Not enough parameters"); 
-		return; 
-	}
-
-	std::string chName = args[1]; 
-	std::string targetNick = args[2]; 
-	
-	if (channels.find(chName) == channels.end())
-	{ 
-		sendReply(client->getFd(), "403 " + chName + " :No such channel"); 
-		return; 
-	} 
-	
-	Channel* ch = channels[chName]; 
-
-	if (!ch->isOperator(client))
-	{ 
-		sendReply(client->getFd(), "482 " + chName + " :You're not channel operator"); 
-		return; 
-	} 
-	
-	// User B'nin eklediği KICK Kontrol Düzeltmeleri
-	Client* targetToKick = ch->getMember(targetNick);
-
-	if (!targetToKick) { 
-		sendReply(client->getFd(), "441 " + targetNick + " " + chName + " :They aren't on that channel"); 
-		return; 
-	}
-
-	if (client->getNickname() == targetNick)
-	{ 
-		sendReply(client->getFd(), "481 :Cannot kick yourself"); 
-		return; 
-	}
-
-	ch->broadcast(":" + client->getNickname() + " KICK " + chName + " " + targetNick + "\r\n", NULL); 
-	sendReply(targetToKick->getFd(), ":" + client->getNickname() + " KICK " + chName + " " + targetNick);
-	ch->removeClient(targetToKick);
+void Commands::handleKick(Client* client, const std::vector<std::string>& args, std::map<std::string, Channel*>& channels) {
+    if (args.size() < 3) {
+        sendReply(client->getFd(), "461 KICK :Not enough parameters");  
+        return;  
+    }
+    std::string chName = args[1];  
+    std::string targetNick = args[2];  
+    
+    if (channels.find(chName) == channels.end()) {
+        sendReply(client->getFd(), "403 " + chName + " :No such channel");  
+        return;  
+    }
+    Channel* ch = channels[chName];  
+    
+    if (!ch->isOperator(client)) {
+        sendReply(client->getFd(), "482 " + chName + " :You're not channel operator");  
+        return;  
+    }
+    
+    Client* targetToKick = ch->getMember(targetNick); 
+    // DÜZELTİLEN EKSİK PARANTEZ BURADA:
+    if (!targetToKick) {  
+        sendReply(client->getFd(), "441 " + targetNick + " " + chName + " :They aren't on that channel");  
+        return;  
+    } 
+    
+    if (client->getNickname() == targetNick) {
+        sendReply(client->getFd(), "481 :Cannot kick yourself");  
+        return;  
+    }
+    
+    ch->broadcast(":" + client->getNickname() + " KICK " + chName + " " + targetNick + "\r\n", NULL);  
+    sendReply(targetToKick->getFd(), ":" + client->getNickname() + " KICK " + chName + " " + targetNick); 
+    ch->removeClient(targetToKick); 
 }
 
-void Commands::handleInvite(Client* client, const std::vector<std::string>& args, std::map<int, Client*>& clients, std::map<std::string, Channel*>& channels)
-{ 
-	if (args.size() < 3)
-		return; 
-	
-	(void)clients;
-	(void)channels;
+void Commands::handleInvite(Client* client, const std::vector<std::string>& args, std::map<int, Client*>& clients, std::map<std::string, Channel*>& channels) {
+    if (args.size() < 3) {
+        sendReply(client->getFd(), "461 INVITE :Not enough parameters");
+        return;
+    }
+    std::string targetNick = args[1];
+    std::string chName = args[2];
 
-	sendReply(client->getFd(), "341 " + client->getNickname() + " " + args[1] + " " + args[2]); 
+    if (channels.find(chName) == channels.end()) {
+        sendReply(client->getFd(), "403 " + chName + " :No such channel");
+        return;
+    }
+    Channel* ch = channels[chName];
+
+    if (!ch->isMember(client)) {
+        sendReply(client->getFd(), "442 " + chName + " :You're not on that channel");
+        return;
+    }
+    if (ch->getInviteOnly() && !ch->isOperator(client)) {
+        sendReply(client->getFd(), "482 " + chName + " :You're not channel operator");
+        return;
+    }
+
+    bool targetExists = false;
+    Client* targetClient = NULL;
+    for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it) {
+        if (it->second->getNickname() == targetNick) {
+            targetExists = true;
+            targetClient = it->second;
+            break;
+        }
+    }
+    
+    if (!targetExists) {
+        sendReply(client->getFd(), "401 " + targetNick + " :No such nick/channel");
+        return;
+    }
+    if (ch->isMember(targetClient)) {
+        sendReply(client->getFd(), "443 " + targetNick + " " + chName + " :is already on channel");
+        return;
+    }
+
+    ch->addInvite(targetNick);
+    sendReply(client->getFd(), "341 " + client->getNickname() + " " + targetNick + " " + chName);
+    sendReply(targetClient->getFd(), ":" + client->getNickname() + " INVITE " + targetNick + " :" + chName);
 }
 
 void Commands::handleTopic(Client* client, const std::vector<std::string>& args, std::map<std::string, Channel*>& channels) { 
@@ -322,37 +354,77 @@ void Commands::handleTopic(Client* client, const std::vector<std::string>& args,
 	} 
 }
 
-void Commands::handleMode(Client* client, const std::vector<std::string>& args, std::map<std::string, Channel*>& channels)
-{ 
-	if (args.size() < 3)
-		return; 
-
-	std::string chName = args[1]; 
-	std::string mode = args[2]; 
-	
-	if (channels.find(chName) == channels.end())
-		return; 
-
-	Channel* ch = channels[chName]; 
-	
-	if (!ch->isOperator(client))
-	{ 
-		sendReply(client->getFd(), "482 " + chName + " :You're not channel operator"); 
-		return; 
-	} 
-	
-	if (mode == "+i")
-		ch->setInviteOnly(true); 
-	else if (mode == "-i")
-		ch->setInviteOnly(false); 
-	else if (mode == "+t")
-		ch->setTopicOpOnly(true); 
-	else if (mode == "-t")
-		ch->setTopicOpOnly(false); 
+void Commands::handleMode(Client* client, const std::vector<std::string>& args, std::map<std::string, Channel*>& channels) {
+    if (args.size() < 3) return;  
+    
+    std::string chName = args[1];  
+    std::string mode = args[2];  
+    
+    if (channels.find(chName) == channels.end()) {
+        sendReply(client->getFd(), "403 " + chName + " :No such channel");
+        return;  
+    }
+    Channel* ch = channels[chName];  
+    
+    if (!ch->isOperator(client)) {
+        sendReply(client->getFd(), "482 " + chName + " :You're not channel operator");  
+        return;  
+    }
+    
+    // Mod Kontrolleri
+    if (mode == "+i") ch->setInviteOnly(true);  
+    else if (mode == "-i") ch->setInviteOnly(false);  
+    else if (mode == "+t") ch->setTopicOpOnly(true);  
+    else if (mode == "-t") ch->setTopicOpOnly(false);  
+    else if (mode == "+k") {
+        if (args.size() > 3) ch->setKey(args[3]);
+    } 
+    else if (mode == "-k") ch->setKey("");
+    else if (mode == "+l") {
+        if (args.size() > 3) ch->setUserLimit(std::atoi(args[3].c_str()));
+    } 
+    else if (mode == "-l") ch->setUserLimit(0);
+    
+    // Tüm kanala modun değiştiğini bildir
+    std::string modeMsg = ":" + client->getNickname() + " MODE " + chName + " " + mode;
+    if (args.size() > 3 && (mode == "+k" || mode == "+l")) {
+        modeMsg += " " + args[3];
+    }
+    ch->broadcast(modeMsg + "\r\n", NULL);
 }
 
 void Commands::handlePing(Client* client, const std::vector<std::string>& args) {
     if (args.size() < 2) return;
     // Gelen PING parametresini alıp PONG olarak geri yolluyoruz
     sendReply(client->getFd(), "PONG " + args[1]); 
+}
+
+void Commands::handlePart(Client* client, const std::vector<std::string>& args, std::map<std::string, Channel*>& channels) {
+    if (args.size() < 2) {
+        sendReply(client->getFd(), "461 PART :Not enough parameters");
+        return;
+    }
+
+    std::string chName = args[1];
+    
+    if (channels.find(chName) == channels.end()) {
+        sendReply(client->getFd(), "403 " + chName + " :No such channel");
+        return;
+    }
+    
+    Channel* ch = channels[chName];
+    
+    if (!ch->isMember(client)) {
+        sendReply(client->getFd(), "442 " + chName + " :You're not on that channel");
+        return;
+    }
+
+    std::string reason = (args.size() > 2) ? args[2] : "Leaving";
+    std::string partMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@" + client->getHostname() + " PART " + chName + " :" + reason;
+
+    // Ayrılma mesajını kanaldaki herkese (çıkan kişi dahil) gönder
+    ch->broadcast(partMsg + "\r\n", NULL);
+    
+    // Kullanıcıyı kanalın üye listesinden tamamen sil
+    ch->removeClient(client);
 }

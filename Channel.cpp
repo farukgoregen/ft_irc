@@ -51,6 +51,10 @@ bool Channel::isOperator(Client* client) const {
 
 size_t Channel::getUserLimit() const { return userLimit; } 
 
+size_t Channel::getMemberCount() const {
+    return members.size();
+}
+
 void Channel::setUserLimit(size_t limit) { userLimit = limit; } 
 
 bool Channel::getInviteOnly() const { return inviteOnly; } 
@@ -61,7 +65,29 @@ bool Channel::getTopicOpOnly() const { return topicOpOnly; }
 
 void Channel::setTopicOpOnly(bool opOnly) { topicOpOnly = opOnly; } 
 
-void Channel::broadcast(const std::string& message, Client* sender) { 
+void Channel::setKey(const std::string& newKey) 
+{ 
+    key = newKey; 
+}
+
+void Channel::addInvite(const std::string& nick) 
+{
+    if (!isInvited(nick))
+        invitedNicknames.push_back(nick);
+}
+
+bool Channel::isInvited(const std::string& nick) const 
+{
+    return std::find(invitedNicknames.begin(), invitedNicknames.end(), nick) != invitedNicknames.end();
+}
+
+void Channel::removeInvite(const std::string& nick) 
+{
+    invitedNicknames.erase(std::remove(invitedNicknames.begin(), invitedNicknames.end(), nick), invitedNicknames.end());
+}
+
+void Channel::broadcast(const std::string& message, Client* sender) 
+{ 
     for (size_t i = 0; i < members.size(); ++i) { 
         if (members[i] != sender) { // Mesajı gönderen hariç herkese ilet
             send(members[i]->getFd(), message.c_str(), message.length(), 0); 

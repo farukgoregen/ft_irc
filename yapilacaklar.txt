@@ -1,3 +1,5 @@
+02.08.2026 gece 4'te DOĞU izlenecek
+
 RFC standartlarına (sanırım bir RFC 2812 kullanıyoruz) bakılacak hata kodlarından emin olunacak
 
 operator yetkisi verme alma eklenecek 

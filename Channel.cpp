@@ -1,5 +1,4 @@
 #include "Channel.hpp"
-#include <algorithm>
 
 Channel::Channel(const std::string& channelName) : name(channelName), topic(""), key(""),
 							userLimit(0), inviteOnly(false), topicOpOnly(false) {}

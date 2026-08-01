@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <map>
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -12,7 +11,6 @@
 #include <cstdlib>
 #include <csignal>
 
-#include "Client.hpp"
 #include "Channel.hpp"
 
 class Commands;

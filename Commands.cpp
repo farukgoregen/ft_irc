@@ -1,9 +1,5 @@
 #include "Commands.hpp"
 #include "Server.hpp"
-#include "Client.hpp"
-#include "Channel.hpp"
-#include <sstream>
-#include <iostream>
 
 Commands::Commands(Server* server) : _server(server) {} // ? neden server alıyor
 

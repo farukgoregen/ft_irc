@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <sys/socket.h>
+#include <algorithm>
+
 #include "Client.hpp"
 
 class Channel

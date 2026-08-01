@@ -2,7 +2,9 @@
 #define COMMANDS_HPP
 
 #include <map>
-#include "Client.hpp"
+#include <sstream>
+#include <iostream>
+
 #include "Channel.hpp"
 
 class Server;

@@ -77,31 +77,40 @@ void Server::init()
 }
 
 void Server::run() {
-	::signal(SIGINT, Server::signalHandler);
-	::signal(SIGQUIT, Server::signalHandler);
+    ::signal(SIGINT, Server::signalHandler);
+    ::signal(SIGQUIT, Server::signalHandler);
 
-	while (Server::signal == false)
-	{ // TODO POLL_HUP ile şart eklenecek
-		int pollCount = poll(&pollFds[0], pollFds.size(), -1);
+    while (Server::signal == false)
+    {
+        if (pollFds.empty()) break;
 
-		if (pollCount < 0 && Server::signal == false)
-			break;
-		for (size_t i = 0; i < pollFds.size();)
-		{
-			bool clientDisconnected = false;
-			
-			if (pollFds[i].revents & POLLIN)
-			{
-				if (pollFds[i].fd == serverFd)
-					acceptNewClient();
-				else
-					clientDisconnected = handleClientData(pollFds[i].fd, i);
-			}
-			if (!clientDisconnected)
-				++i;
-		}
-	}
-	std::cout << "Closing all sockets." << std::endl;
+        int pollCount = poll(pollFds.data(), pollFds.size(), -1);
+        if (pollCount < 0)
+        {
+            if (errno == EINTR) continue;
+            break;
+        }
+
+        for (size_t i = 0; i < pollFds.size();)
+        {
+            bool clientDisconnected = false;
+            if (pollFds[i].revents & POLLIN)
+            {
+                if (pollFds[i].fd == serverFd)
+                    acceptNewClient();
+                else
+                    clientDisconnected = handleClientData(pollFds[i].fd, i);
+            }
+            else if (pollFds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
+            {
+                disconnectClient(pollFds[i].fd, i);
+                clientDisconnected = true;
+            }
+            if (!clientDisconnected)
+                ++i;
+        }
+    }
+    std::cout << "Closing all sockets." << std::endl;
 }
 
 void Server::acceptNewClient()

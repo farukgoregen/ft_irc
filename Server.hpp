@@ -2,8 +2,6 @@
 #define SERVER_HPP
 
 #include <iostream>
-#include <string>
-#include <vector>
 #include <map>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -21,27 +19,28 @@ class Commands;
 
 class Server {
 private:
-    int                             _port;
-    std::string                     _password;
-    int                             _serverFd;
-    std::vector<pollfd>             _pollFds;
-    std::map<int, Client*>          _clients;
-    std::map<std::string, Channel*> channels;
-    Commands*                       _cmdHandler;
-    static bool                     _signal;
+	int				port;
+	std::string			password;
+	int				serverFd;
+	std::vector<pollfd>		pollFds;
+	std::map<int, Client*>		clients;
+	std::map<std::string, Channel*>	channels;
+	Commands*			cmdHandler;
+	static bool			signal;
 
-    void setNonBlocking(int fd);
-    void acceptNewClient();
-    bool handleClientData(int clientFd, size_t pollIdx);
-    void disconnectClient(int clientFd, size_t pollIdx);
+	void setNonBlocking(int fd);
+	void acceptNewClient();
+	bool handleClientData(int clientFd, size_t pollIdx);
+	void disconnectClient(int clientFd, size_t pollIdx);
 
 public:
-    Server(int port, const std::string& password);
-    ~Server();
-    static void signalHandler(int signum);
-    void init();
-    void run();
-    void sendData(int clientFd, const std::string& message);
+	Server(int port, const std::string& password);
+	~Server();
+
+	static void signalHandler(int signum);
+	void init();
+	void run();
+	void sendData(int clientFd, const std::string& message);
 };
 
 #endif

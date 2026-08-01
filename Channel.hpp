@@ -1,56 +1,54 @@
-#ifndef CHANNEL_HPP 
-#define CHANNEL_HPP 
+#ifndef CHANNEL_HPP
+# define CHANNEL_HPP
 
-#include <string> 
-#include <vector> 
-#include <sys/socket.h> 
-#include "Client.hpp" 
+#include <vector>
+#include <sys/socket.h>
+#include "Client.hpp"
 
-class Channel { 
-private: 
-    std::string name; 
-    std::string topic; 
-    std::string key; 
-    size_t      userLimit; 
-    bool        inviteOnly; 
-    bool        topicOpOnly; 
-    std::vector<Client*> members; 
-    std::vector<Client*> operators; 
-    std::vector<std::string> invitedNicknames; 
+class Channel
+{
+	private:
+		std::string			name;
+		std::string			topic;
+		std::string			key;
+		size_t				userLimit;
+		bool				inviteOnly;
+		bool				topicOpOnly;
+		std::vector<Client*>		members;
+		std::vector<Client*>		operators;
+		std::vector<std::string>	invitedNicknames;
+	
+	public:
+		Channel(const std::string& channelName);
+		~Channel();
+	
+		std::string getName() const;
+		std::string getTopic() const;
+		void setTopic(const std::string& newTopic);
+		std::string getKey() const;
 
-public: 
-    Channel(const std::string& channelName); 
-    ~Channel(); 
+		void addClient(Client* client);
+		void removeClient(Client* client);
+		void addOperator(Client* client);
+		void removeOperator(Client* client);
+		Client* getMember(const std::string& nick);
 
-    std::string getName() const; 
-    std::string getTopic() const; 
-    void setTopic(const std::string& newTopic); 
-    std::string getKey() const; 
-    
-    // Kanal Üye Yönetimi 
-    void addClient(Client* client); 
-    void removeClient(Client* client); 
-    void addOperator(Client* client); 
-    void removeOperator(Client* client); 
-    Client* getMember(const std::string& nick);
-         
-    bool isMember(Client* client) const; 
-    bool isOperator(Client* client) const; 
-    
-    // Kanal Modları (Getter ve Setter) 
-    size_t getUserLimit() const; 
-    size_t getMemberCount() const;
-    void setUserLimit(size_t limit); 
-    bool getInviteOnly() const; 
-    void setInviteOnly(bool invite); 
-    bool getTopicOpOnly() const; 
-    void setTopicOpOnly(bool opOnly); 
-    void setKey(const std::string& newKey);
-    void addInvite(const std::string& nick);
-    bool isInvited(const std::string& nick) const;
-    void removeInvite(const std::string& nick);
-    
-    // Kanaldaki Herkese Mesaj Gönderme 
-    void broadcast(const std::string& message, Client* sender); 
+		bool isMember(Client* client) const;
+		bool isOperator(Client* client) const;
+
+		size_t getUserLimit() const;
+		size_t getMemberCount() const;
+		void setUserLimit(size_t limit);
+		bool getInviteOnly() const;
+		void setInviteOnly(bool invite);
+		bool getTopicOpOnly() const;
+		void setTopicOpOnly(bool opOnly);
+		void setKey(const std::string& newKey);
+		void addInvite(const std::string& nick);
+		bool isInvited(const std::string& nick) const;
+		void removeInvite(const std::string& nick);
+
+		void broadcast(const std::string& message, Client* sender);
 };
+
 #endif

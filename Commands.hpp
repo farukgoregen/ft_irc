@@ -18,7 +18,7 @@ class Commands
 		void sendReply(int fd, const std::string& reply);
 
 		void handlePass(Client* client, const std::vector<std::string>& args, const std::string& pass);
-		void handleNick(Client* client, const std::vector<std::string>& args, std::map<int, Client*>& clients);
+		void handleNick(Client* client, const std::vector<std::string>& args, std::map<int, Client*>& clients, std::map<std::string, Channel*>& channels);
 		void handleUser(Client* client, const std::vector<std::string>& args);
 		void handleJoin(Client* client, const std::vector<std::string>& args, std::map<std::string, Channel*>& channels);
 		void handlePrivmsg(Client* client, const std::vector<std::string>& args, std::map<int, Client*>& clients, std::map<std::string, Channel*>& channels);

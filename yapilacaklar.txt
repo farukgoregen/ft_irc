@@ -1,44 +1,9 @@
-02.08.2026 gece 4'te DOĞU izlenecek
-
 RFC standartlarına (sanırım bir RFC 2812 kullanıyoruz) bakılacak hata kodlarından emin olunacak
 
-operator yetkisi verme alma eklenecek 
+KICK komutu için mesaj özelliği eklenecek
 
+KICK (Kanaldan Uzaklaştırma)Kanal yetkililerinin (operatörlerin) bir kullanıcıyı kanaldan zorla çıkarmasını sağlar.
+Standart Kullanım: KICK <kanal> <kullanıcı> [:<gerekçe>]
+Örnek: KICK #sohbet Mehmet :Kurallara uy!
+Sunucu Mesajı: :Ahmet!~user@host KICK #sohbet Mehmet :Kurallara uy!
 
-Test 1: Kanal Kişi Limiti (+l) -----"TEST BASARILI"------
-Bu testte kanala sadece 1 kişilik yer açacağız ve sen zaten içeride olduğun için Ali'nin dışarıda kalmasını bekleyeceğiz.
-
-Yusuf'un ekranında: /mode #42 +l 1 yaz. (Kapasite 1 kişi olarak ayarlandı).
-
-Ali'nin ekranında: /join #42 yaz. (Ali'nin içeri girememesi ve kapasite dolu hatası alması gerekiyor).
-
-Yusuf'un ekranında: Test bittikten sonra limiti kaldırmak için /mode #42 -l yaz.
-
-
-
-
-Test 2: Sadece Davetli Modu (+i) ve INVITE -----"TEST BASARILI"------
-Bu testte kanalı gizli (sadece davet edilenler girebilir) hale getireceğiz ve Ali'ye özel davetiye yollayacağız.
-
-Yusuf'un ekranında: /mode #42 +i yaz. (Kanal artık sadece davetiyeyle alıyor).
-
-Ali'nin ekranında: /join #42 yaz. (Ali'nin "Cannot join channel (+i)" hatası alıp kapıda kalması lazım).
-
-Yusuf'un ekranında: Ali'ye davetiye atmak için /invite ali #42 yaz.
-
-Ali'nin ekranında: Davetiye ulaştıktan sonra tekrar /join #42 yaz. (Bu sefer başarıyla içeri girmesi gerekiyor).
-
-
-
-Test 3: Operatör Özel Konu Başlığı (+t ve TOPIC) -----"TEST BASARILI"------
-Bu testte kanalın üst kısmında yazan açıklama (topic) metnini sadece operatörlerin değiştirebilmesini sağlayacağız. Ali şu an kanalda ama operatör değil.
-
-Yusuf'un ekranında: /mode #42 +t yaz. (Başlık değiştirme yetkisini sadece operatörlere kısıtladın).
-
-Ali'nin ekranında: Başlığı değiştirmeyi denemek için /topic #42 projemiz bitiyor yaz. (Ali'nin "You're not channel operator" hatası alıp değiştirememesi gerekiyor).
-
-Yusuf'un ekranında: Sen değiştirmeyi dene: /topic #42 projemiz bitiyor yaz. (İşlem başarılı olacak ve kanaldaki herkese yeni başlık duyurulacak).
-
-Ali'nin ekranında: Yeni başlığı sadece okumak (görüntülemek) için parametresiz olarak /topic #42 yaz.
-
-Kritik Bir Uyarı (Değerlendirme Öncesi):

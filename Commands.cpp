@@ -47,7 +47,7 @@ void Commands::execute(int clientFd, const std::string& rawCmd, std::map<int, Cl
 
 	if (cmd == "NICK")
 	{
-		handleNick(client, args, clients);
+		handleNick(client, args, clients, channels);
 		return;
 	}
 
@@ -101,7 +101,7 @@ void Commands::handlePass(Client* client, const std::vector<std::string>& args, 
 		sendReply(client->getFd(), "464 :Password incorrect");
 }
 
-void Commands::handleNick(Client* client, const std::vector<std::string>& args, std::map<int, Client*>& clients)
+void Commands::handleNick(Client* client, const std::vector<std::string>& args, std::map<int, Client*>& clients, std::map<std::string, Channel*>& channels)
 {
 	if (!client->getIsAuthenticated())
 	{
@@ -126,12 +126,23 @@ void Commands::handleNick(Client* client, const std::vector<std::string>& args, 
 		}
 	}
 
+	std::string oldNick = client->getNickname();
 	client->setNickname(newNick);
 
 	if (!client->getUsername().empty() && !client->getIsRegistered())
 	{
 		client->setIsRegistered(true);
 		sendReply(client->getFd(), "001 " + newNick + " :Welcome to the FT_IRC Network!");
+	}
+	else if (client->getIsRegistered())
+	{
+		std::string nickChangeMsg = ":" + oldNick + " NICK :" + newNick;
+		sendReply(client->getFd(), nickChangeMsg);
+		for (std::map<std::string, Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
+		{
+			if (it->second->isMember(client))
+				it->second->broadcast(nickChangeMsg + "\r\n", client);
+		}
 	}
 }
 
@@ -326,7 +337,7 @@ void Commands::handleInvite(Client* client, const std::vector<std::string>& args
 	}
 
 	std::string targetNick = args[1];
-	std::string chName = args[2]; // RFC 2812 standardı INVITE <nickname> <channel>
+	std::string chName = args[2];
 
 	if (channels.find(chName) == channels.end())
 	{

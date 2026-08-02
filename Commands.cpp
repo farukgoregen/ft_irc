@@ -300,7 +300,7 @@ void Commands::handlePrivmsg(Client* client, const std::vector<std::string>& arg
 			}
 		}
 		if (!found)
-			sendReply(client->getFd(), "401 " + target + " :No such nick/channel");
+			sendReply(client->getFd(), "401 " + target + " :No such nick");
 	}
 }
 

@@ -83,12 +83,14 @@ void Server::run()
 
 	while (Server::signal == false)
 	{
-		if (pollFds.empty()) break;
+		if (pollFds.empty())
+			break;
 
 		int pollCount = poll(pollFds.data(), pollFds.size(), -1);
 		if (pollCount < 0)
 		{
-			if (errno == EINTR) continue;
+			if (errno == EINTR) 
+				continue;
 			break;
 		}
 

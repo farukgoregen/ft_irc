@@ -2,7 +2,7 @@
 
 This project is an Internet Relay Chat (IRC) server developed from scratch in accordance with the C++98 standard. It is designed to be fully compatible with actual IRC clients (such as Irssi, HexChat, etc.).
 
-## 👨‍💻 Development Team & Division of Labor
+## Development Team & Division of Labor
 
 This project was developed by a team of three using a modular architecture:
 
@@ -12,7 +12,7 @@ This project was developed by a team of three using a modular architecture:
 
 ---
 
-## ⚙️ Technical Specifications & Constraints
+## Technical Specifications & Constraints
 
 In accordance with the 42 curriculum PDF requirements, our project strictly adheres to the following rules:
 
@@ -23,7 +23,7 @@ In accordance with the 42 curriculum PDF requirements, our project strictly adhe
 
 ---
 
-## 🚀 Build and Run
+## Build and Run
 
 To compile the project, you must have `make` and a C++ compiler (`c++` or `clang++`) installed on your system.
 
@@ -53,7 +53,7 @@ make
 
 ---
 
-## 📡 Client Connection
+## Client Connection
 
 Once the server is running, you can connect using a standard IRC client or Netcat.
 
@@ -77,7 +77,7 @@ USER <username> 0 * :<realname>
 
 ---
 
-## 🛠️ Supported Commands
+## Supported Commands
 
 Our server fully supports the following commands in accordance with the RFC 2812 standard:
 
@@ -88,7 +88,7 @@ Our server fully supports the following commands in accordance with the RFC 2812
 
 ---
 
-## 🔐 Channel Modes
+## Channel Modes
 
 Our server implements the following channel modes, manageable by channel operators:
 

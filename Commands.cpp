@@ -157,7 +157,7 @@ void Commands::handleUser(Client* client, const std::vector<std::string>& args)
 		return; 
 	}
 
-	if (args.size() < 5) // RFC 2812 standardı: USER <username> <hostname> <servername> <realname> -> USER ahmet 0 * :Ahmet Yilmaz
+	if (args.size() < 5)
 	{
 		sendReply(client->getFd(), "461 USER :Not enough parameters");
 		return; 

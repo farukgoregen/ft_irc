@@ -585,4 +585,10 @@ void Commands::handlePart(Client* client, const std::vector<std::string>& args, 
 
 	ch->broadcast(partMsg + "\r\n", NULL);
 	ch->removeClient(client);
+
+	if (ch->getMemberCount() == 0)
+	{
+		delete ch;
+		channels.erase(chName);
+	}
 }

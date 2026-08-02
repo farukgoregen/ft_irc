@@ -324,8 +324,22 @@ void Commands::handleKick(Client* client, const std::vector<std::string>& args, 
 		return;
 	}
 
-	ch->broadcast(":" + client->getNickname() + " KICK " + chName + " " + targetNick + "\r\n", NULL);
-	sendReply(targetToKick->getFd(), ":" + client->getNickname() + " KICK " + chName + " " + targetNick);
+	std::string reason = "Kicked by operator";
+	
+	if (args.size() > 3)
+	{
+		reason = args[3];
+		for (size_t i = 4; i < args.size(); ++i)
+			reason += " " + args[i];
+		
+		if (reason[0] == ':')
+			reason.erase(0, 1);
+	}
+
+	std::string senderPrefix = ":" + client->getNickname() + "!" + client->getUsername() + "@" + client->getHostname();
+	std::string kickMsg = senderPrefix + " KICK " + chName + " " + targetNick + " :" + reason;
+
+	ch->broadcast(kickMsg + "\r\n", NULL);
 	ch->removeClient(targetToKick);
 }
 

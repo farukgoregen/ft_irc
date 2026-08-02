@@ -25,7 +25,7 @@ std::vector<std::string> Commands::split(const std::string& str)
 void Commands::execute(int clientFd, const std::string& rawCmd, std::map<int, Client*>& clients,
 			std::map<std::string, Channel*>& channels, const std::string& serverPass) // ? map vector syntaxlarına hakim ol
 {
-	if (rawCmd.empty() || clients.find(clientFd) == clients.end())
+	if (rawCmd.empty() || clients.find(clientFd) == clients.end()) // ? map fonksiyonlarına bak neden burada find == end demiş
 		return;
 
 	Client* client = clients[clientFd]; // ? Client ile nasıl çalışıyor detaylı öğren
@@ -71,7 +71,7 @@ void Commands::execute(int clientFd, const std::string& rawCmd, std::map<int, Cl
 		handleKick(client, args, channels);
 	else if (cmd == "INVITE")
 		handleInvite(client, args, clients, channels);
-	else if (cmd == "TOPIC") // ? kimler ne zaman değiştirebilir
+	else if (cmd == "TOPIC")
 		handleTopic(client, args, channels);
 	else if (cmd == "MODE")
 		handleMode(client, args, channels);
@@ -115,7 +115,7 @@ void Commands::handleNick(Client* client, const std::vector<std::string>& args, 
 		return;
 	}
 
-	std::string newNick = args[1];
+	std::string newNick = args[1]; // ? USER ve NICK girmek zorunlu mu girdikten sonra değiştirebilir miyiz öyle bir komut lazım mı
 
 	for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
 	{
@@ -136,14 +136,14 @@ void Commands::handleNick(Client* client, const std::vector<std::string>& args, 
 }
 
 void Commands::handleUser(Client* client, const std::vector<std::string>& args)
-{ 
+{
 	if (!client->getIsAuthenticated())
 	{
 		sendReply(client->getFd(), "451 :You have not registered (Password required first)");
 		return; 
 	}
 
-	if (args.size() < 5)
+	if (args.size() < 5) // ? neden bu size 5 burada kullandığımız değerler neler
 	{
 		sendReply(client->getFd(), "461 USER :Not enough parameters");
 		return; 
@@ -158,7 +158,7 @@ void Commands::handleUser(Client* client, const std::vector<std::string>& args)
 	client->setUsername(args[1]);
 	client->setHostname(args[3]);
 
-	if (!client->getNickname().empty() && !client->getIsRegistered())
+	if (!client->getNickname().empty() && !client->getIsRegistered()) // ? neden burada nickname bakıyoruz ki eğer vaolan bir nickname girdiyse zaten hata veriyor NICK kodudna
 	{
 		client->setIsRegistered(true);
 		sendReply(client->getFd(), "001 " + client->getNickname() + " :Welcome to the FT_IRC Network!");
@@ -223,7 +223,7 @@ void Commands::handleJoin(Client* client, const std::vector<std::string>& args, 
 }
 
 void Commands::handlePrivmsg(Client* client, const std::vector<std::string>& args,
-	std::map<int, Client*>& clients, std::map<std::string, Channel*>& channels)
+				std::map<int, Client*>& clients, std::map<std::string, Channel*>& channels)
 {
 	if (args.size() < 3)
 	{
@@ -258,9 +258,10 @@ void Commands::handlePrivmsg(Client* client, const std::vector<std::string>& arg
 	{
 		bool found = false;
 
-		for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
+		for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it) // ? it mantığına iyi bak second ne
 		{
-			if (it->second->getNickname() == target) {
+			if (it->second->getNickname() == target)
+			{
 				sendReply(it->second->getFd(), ":" + client->getNickname() + " PRIVMSG " + target + " " + msg);
 				found = true;
 				break;
@@ -280,7 +281,8 @@ void Commands::handleKick(Client* client, const std::vector<std::string>& args, 
 	}
 
 	std::string chName = args[1];
-	std::string targetNick = args[2];
+	std::string targetNick = args[2]; // ? bir operator başka bir operatorü odadan atabilir mi 
+					// ? odada birden fazla operator olabilir mi
 	
 	if (channels.find(chName) == channels.end())
 	{
@@ -325,7 +327,7 @@ void Commands::handleInvite(Client* client, const std::vector<std::string>& args
 	}
 
 	std::string targetNick = args[1];
-	std::string chName = args[2];
+	std::string chName = args[2]; // ? neden burada chName 3'te sırası neden INVITE user channle şeklinde
 
 	if (channels.find(chName) == channels.end())
 	{
@@ -341,7 +343,7 @@ void Commands::handleInvite(Client* client, const std::vector<std::string>& args
 		return;
 	}
 
-	if (ch->getInviteOnly() && !ch->isOperator(client))
+	if (ch->getInviteOnly() && !ch->isOperator(client)) // ? neden sadece operator davet edebiliyor
 	{
 		sendReply(client->getFd(), "482 " + chName + " :You're not channel operator");
 		return;
@@ -373,7 +375,7 @@ void Commands::handleInvite(Client* client, const std::vector<std::string>& args
 	}
 
 	ch->addInvite(targetNick);
-	sendReply(client->getFd(), "341 " + client->getNickname() + " " + targetNick + " " + chName);
+	sendReply(client->getFd(), "341 " + client->getNickname() + " " + targetNick + " " + chName); // ? neden burada 341 var ne yazmak istedik burada
 	sendReply(targetClient->getFd(), ":" + client->getNickname() + " INVITE " + targetNick + " :" + chName);
 }
 
@@ -388,7 +390,7 @@ void Commands::handleTopic(Client* client, const std::vector<std::string>& args,
 		return;
 
 	Channel* ch = channels[chName];
-
+	 // ? kimler ne zaman değiştirebilir? neden sadece operator topic gönderiyor? topic modda mesajlaşılabiliyor mu? 
 	if (args.size() == 2)
 		sendReply(client->getFd(), "332 " + client->getNickname() + " " + chName + " :" + ch->getTopic());
 	else
@@ -425,7 +427,7 @@ void Commands::handleMode(Client* client, const std::vector<std::string>& args, 
 		return;
 	}
 
-	if (mode == "+i")
+	if (mode == "+i") // TODO modeları detaylı öğren
 		ch->setInviteOnly(true);
 	else if (mode == "-i")
 		ch->setInviteOnly(false);
@@ -435,14 +437,14 @@ void Commands::handleMode(Client* client, const std::vector<std::string>& args, 
 		ch->setTopicOpOnly(false);
 	else if (mode == "+k")
 	{
-		if (args.size() > 3)
+		if (args.size() > 3) // ? // ? neden 3'ten büyük olmasına bakıyor
 			ch->setKey(args[3]);
 	}
 	else if (mode == "-k")
 		ch->setKey("");
 	else if (mode == "+l")
 	{
-		if (args.size() > 3)
+		if (args.size() > 3) // ? neden 3'ten büyük olmasına bakıyor
 			ch->setUserLimit(std::atoi(args[3].c_str()));
 	}
 	else if (mode == "-l")
@@ -480,7 +482,7 @@ void Commands::handlePart(Client* client, const std::vector<std::string>& args, 
 
 	Channel* ch = channels[chName];
 	
-	if (!ch->isMember(client))
+	if (!ch->isMember(client)) // ? part neden var? nasıl kulanılıyor? nasıl çalışıyor?
 	{
 		sendReply(client->getFd(), "442 " + chName + " :You're not on that channel");
 		return;

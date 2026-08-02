@@ -1,34 +1,34 @@
 #include "Commands.hpp"
 #include "Server.hpp"
 
-Commands::Commands(Server* server) : _server(server) {} // ? neden server alıyor
+Commands::Commands(Server* server) : _server(server) {}
 
 Commands::~Commands() {}
 
-void Commands::sendReply(int fd, const std::string& reply) // ? send data varken neden burada send reply diye bir fonksiyon daha yazdık
+void Commands::sendReply(int fd, const std::string& reply)
 {
-	std::string msg = reply + "\r\n"; // ? neden rn ekliyoruz bir daha bak
+	std::string msg = reply + "\r\n";
 	_server->sendData(fd, msg);
 }
 
 std::vector<std::string> Commands::split(const std::string& str)
 {
-	std::vector<std::string> tokens; // ? vector map nedir neden kullanılır neye göre kullanılır farkı neler
-	std::stringstream ss(str); // ? stringstream neydi neden bu kullanılıyor
+	std::vector<std::string> tokens;
+	std::stringstream ss(str);
 	std::string token;
 
-	while (ss >> token) // ? bu nasıl çalışıyor
+	while (ss >> token)
 		tokens.push_back(token);
 	return tokens;
 }
 
 void Commands::execute(int clientFd, const std::string& rawCmd, std::map<int, Client*>& clients,
-			std::map<std::string, Channel*>& channels, const std::string& serverPass) // ? map vector syntaxlarına hakim ol
+			std::map<std::string, Channel*>& channels, const std::string& serverPass)
 {
 	if (rawCmd.empty() || clients.find(clientFd) == clients.end())
 		return;
 
-	Client* client = clients[clientFd]; // ? Client ile nasıl çalışıyor detaylı öğren
+	Client* client = clients[clientFd];
 	std::vector<std::string> args = split(rawCmd);
 
 	if (args.empty())
@@ -59,7 +59,7 @@ void Commands::execute(int clientFd, const std::string& rawCmd, std::map<int, Cl
 
 	if (!client->getIsRegistered())
 	{
-		sendReply(clientFd, "451 * :You have not registered"); // ? RFC mesajlarına bak
+		sendReply(clientFd, "451 * :You have not registered");
 		return;
 	}
 
@@ -71,7 +71,7 @@ void Commands::execute(int clientFd, const std::string& rawCmd, std::map<int, Cl
 		handleKick(client, args, channels);
 	else if (cmd == "INVITE")
 		handleInvite(client, args, clients, channels);
-	else if (cmd == "TOPIC") // ? kimler ne zaman değiştirebilir
+	else if (cmd == "TOPIC")
 		handleTopic(client, args, channels);
 	else if (cmd == "MODE")
 		handleMode(client, args, channels);
@@ -136,14 +136,14 @@ void Commands::handleNick(Client* client, const std::vector<std::string>& args, 
 }
 
 void Commands::handleUser(Client* client, const std::vector<std::string>& args)
-{ 
+{
 	if (!client->getIsAuthenticated())
 	{
 		sendReply(client->getFd(), "451 :You have not registered (Password required first)");
 		return; 
 	}
 
-	if (args.size() < 5)
+	if (args.size() < 5) // RFC 2812 standardı: USER <username> <hostname> <servername> <realname> -> USER ahmet 0 * :Ahmet Yilmaz
 	{
 		sendReply(client->getFd(), "461 USER :Not enough parameters");
 		return; 
@@ -223,7 +223,7 @@ void Commands::handleJoin(Client* client, const std::vector<std::string>& args, 
 }
 
 void Commands::handlePrivmsg(Client* client, const std::vector<std::string>& args,
-	std::map<int, Client*>& clients, std::map<std::string, Channel*>& channels)
+				std::map<int, Client*>& clients, std::map<std::string, Channel*>& channels)
 {
 	if (args.size() < 3)
 	{
@@ -260,7 +260,8 @@ void Commands::handlePrivmsg(Client* client, const std::vector<std::string>& arg
 
 		for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
 		{
-			if (it->second->getNickname() == target) {
+			if (it->second->getNickname() == target)
+			{
 				sendReply(it->second->getFd(), ":" + client->getNickname() + " PRIVMSG " + target + " " + msg);
 				found = true;
 				break;
@@ -325,7 +326,7 @@ void Commands::handleInvite(Client* client, const std::vector<std::string>& args
 	}
 
 	std::string targetNick = args[1];
-	std::string chName = args[2];
+	std::string chName = args[2]; // RFC 2812 standardı INVITE <nickname> <channel>
 
 	if (channels.find(chName) == channels.end())
 	{
@@ -445,12 +446,36 @@ void Commands::handleMode(Client* client, const std::vector<std::string>& args, 
 		if (args.size() > 3)
 			ch->setUserLimit(std::atoi(args[3].c_str()));
 	}
+	else if (mode == "+o")
+	{
+		if (args.size() > 3) 
+		{
+			Client* target = ch->getMember(args[3]);
+
+			if (target)
+				ch->addOperator(target);
+			else
+				sendReply(client->getFd(), "441 " + args[3] + " " + chName + " :They aren't on that channel");
+		}
+	}
+	else if (mode == "-o")
+	{
+		if (args.size() > 3)
+		{
+			Client* target = ch->getMember(args[3]);
+
+			if (target)
+				ch->removeOperator(target);
+			else
+				sendReply(client->getFd(), "441 " + args[3] + " " + chName + " :They aren't on that channel");
+		}
+	}
 	else if (mode == "-l")
 		ch->setUserLimit(0);
 
 	std::string modeMsg = ":" + client->getNickname() + " MODE " + chName + " " + mode;
 
-	if (args.size() > 3 && (mode == "+k" || mode == "+l"))
+	if (args.size() > 3 && (mode == "+k" || mode == "+l" || mode == "+o" || mode == "-o"))
 		modeMsg += " " + args[3];
 	ch->broadcast(modeMsg + "\r\n", NULL);
 }

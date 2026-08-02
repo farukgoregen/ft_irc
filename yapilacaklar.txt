@@ -1,9 +1,0 @@
-RFC standartlarına (sanırım bir RFC 2812 kullanıyoruz) bakılacak hata kodlarından emin olunacak
-
-KICK komutu için mesaj özelliği eklenecek
-
-KICK (Kanaldan Uzaklaştırma)Kanal yetkililerinin (operatörlerin) bir kullanıcıyı kanaldan zorla çıkarmasını sağlar.
-Standart Kullanım: KICK <kanal> <kullanıcı> [:<gerekçe>]
-Örnek: KICK #sohbet Mehmet :Kurallara uy!
-Sunucu Mesajı: :Ahmet!~user@host KICK #sohbet Mehmet :Kurallara uy!
-

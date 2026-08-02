@@ -563,6 +563,10 @@ void Commands::handlePart(Client* client, const std::vector<std::string>& args, 
 	}
 
 	std::string reason = (args.size() > 2) ? args[2] : "Leaving";
+
+	for (int i = 3; i < args.size(); i++)
+		reason += " " + args[i];
+
 	std::string partMsg = ":" + client->getNickname() +
 				"!" + client->getUsername() +
 				"@" + client->getHostname() +

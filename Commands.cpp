@@ -248,6 +248,8 @@ void Commands::handlePrivmsg(Client* client, const std::vector<std::string>& arg
 	for (size_t i = 3; i < args.size(); ++i)
 		msg += " " + args[i];
 
+	std::string senderPrefix = ":" + client->getNickname() + "!" + client->getUsername() + "@" + client->getHostname();
+
 	if (target[0] == '#')
 	{
 		if (channels.find(target) != channels.end())
@@ -260,7 +262,7 @@ void Commands::handlePrivmsg(Client* client, const std::vector<std::string>& arg
 				return;
 			}
 			
-			ch->broadcast(":" + client->getNickname() + " PRIVMSG " + target + " " + msg + "\r\n", client);  
+			ch->broadcast(senderPrefix + " PRIVMSG " + target + " " + msg + "\r\n", client);
 		}
 		else
 			sendReply(client->getFd(), "403 " + target + " :No such channel");
@@ -273,7 +275,7 @@ void Commands::handlePrivmsg(Client* client, const std::vector<std::string>& arg
 		{
 			if (it->second->getNickname() == target)
 			{
-				sendReply(it->second->getFd(), ":" + client->getNickname() + " PRIVMSG " + target + " " + msg);
+				sendReply(it->second->getFd(), senderPrefix + " PRIVMSG " + target + " " + msg);
 				found = true;
 				break;
 			}

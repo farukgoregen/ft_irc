@@ -39,6 +39,9 @@ void Commands::execute(int clientFd, const std::string& rawCmd, std::map<int, Cl
 	for (size_t i = 0; i < cmd.length(); ++i)
 		cmd[i] = std::toupper(cmd[i]);
 
+	if (cmd == "CAP")
+        return;
+
 	if (cmd == "PASS")
 	{
 		handlePass(client, args, serverPass);
@@ -451,6 +454,14 @@ void Commands::handleTopic(Client* client, const std::vector<std::string>& args,
 
 void Commands::handleMode(Client* client, const std::vector<std::string>& args, std::map<std::string, Channel*>& channels)
 {
+	if (args.size() < 2)
+		return;
+
+	std::string target = args[1];
+
+	if (target.empty() || target[0] != '#')
+		return;
+
 	if (args.size() < 3)
 		return;
 

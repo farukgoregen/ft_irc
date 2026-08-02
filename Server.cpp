@@ -76,41 +76,42 @@ void Server::init()
 	std::cout << "IRC Server listening on port " << port << "..." << std::endl;
 }
 
-void Server::run() {
-    ::signal(SIGINT, Server::signalHandler);
-    ::signal(SIGQUIT, Server::signalHandler);
+void Server::run()
+{
+	::signal(SIGINT, Server::signalHandler);
+	::signal(SIGQUIT, Server::signalHandler);
 
-    while (Server::signal == false)
-    {
-        if (pollFds.empty()) break;
+	while (Server::signal == false)
+	{
+		if (pollFds.empty()) break;
 
-        int pollCount = poll(pollFds.data(), pollFds.size(), -1);
-        if (pollCount < 0)
-        {
-            if (errno == EINTR) continue;
-            break;
-        }
+		int pollCount = poll(pollFds.data(), pollFds.size(), -1);
+		if (pollCount < 0)
+		{
+			if (errno == EINTR) continue;
+			break;
+		}
 
-        for (size_t i = 0; i < pollFds.size();)
-        {
-            bool clientDisconnected = false;
-            if (pollFds[i].revents & POLLIN)
-            {
-                if (pollFds[i].fd == serverFd)
-                    acceptNewClient();
-                else
-                    clientDisconnected = handleClientData(pollFds[i].fd, i);
-            }
-            else if (pollFds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
-            {
-                disconnectClient(pollFds[i].fd, i);
-                clientDisconnected = true;
-            }
-            if (!clientDisconnected)
-                ++i;
-        }
-    }
-    std::cout << "Closing all sockets." << std::endl;
+		for (size_t i = 0; i < pollFds.size();)
+		{
+			bool clientDisconnected = false;
+			if (pollFds[i].revents & POLLIN)
+			{
+				if (pollFds[i].fd == serverFd)
+					acceptNewClient();
+				else
+					clientDisconnected = handleClientData(pollFds[i].fd, i);
+			}
+			else if (pollFds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
+			{
+				disconnectClient(pollFds[i].fd, i);
+				clientDisconnected = true;
+			}
+			if (!clientDisconnected)
+				++i;
+		}
+	}
+	std::cout << "Closing all sockets." << std::endl;
 }
 
 void Server::acceptNewClient()

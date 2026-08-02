@@ -341,8 +341,8 @@ void Commands::handleKick(Client* client, const std::vector<std::string>& args, 
 	}
 
 	std::string reason = "Kicked by operator";
-	
-	if (args.size() > 3)
+
+	if (args[3].size() > 1)
 	{
 		reason = args[3];
 		for (size_t i = 4; i < args.size(); ++i)

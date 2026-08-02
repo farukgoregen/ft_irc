@@ -40,7 +40,7 @@ void Commands::execute(int clientFd, const std::string& rawCmd, std::map<int, Cl
 		cmd[i] = std::toupper(cmd[i]);
 
 	if (cmd == "CAP")
-        return;
+		return;
 
 	if (cmd == "PASS")
 	{

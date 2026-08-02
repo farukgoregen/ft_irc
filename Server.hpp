@@ -10,7 +10,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <csignal>
-
+#include <errno.h>
 #include "Channel.hpp"
 
 class Commands;

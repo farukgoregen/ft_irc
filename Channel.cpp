@@ -9,9 +9,23 @@ std::string Channel::getName() const { return name; }
 
 std::string Channel::getTopic() const { return topic; }
 
+std::string Channel::getKey() const { return key; }
+
+size_t Channel::getUserLimit() const { return userLimit; }
+
+size_t Channel::getMemberCount() const { return members.size(); }
+
+bool Channel::getInviteOnly() const { return inviteOnly; }
+
+bool Channel::getTopicOpOnly() const { return topicOpOnly; }
+
 void Channel::setTopic(const std::string& newTopic) { topic = newTopic; }
 
-std::string Channel::getKey() const { return key; }
+void Channel::setUserLimit(size_t limit) { userLimit = limit; }
+
+void Channel::setInviteOnly(bool invite) { inviteOnly = invite; }
+
+void Channel::setTopicOpOnly(bool opOnly) { topicOpOnly = opOnly; }
 
 void Channel::addClient(Client* client)
 {
@@ -55,20 +69,6 @@ bool Channel::isOperator(Client* client) const
 {
 	return std::find(operators.begin(), operators.end(), client) != operators.end();
 }
-
-size_t Channel::getUserLimit() const { return userLimit; }
-
-size_t Channel::getMemberCount() const { return members.size(); }
-
-void Channel::setUserLimit(size_t limit) { userLimit = limit; }
-
-bool Channel::getInviteOnly() const { return inviteOnly; }
-
-void Channel::setInviteOnly(bool invite) { inviteOnly = invite; }
-
-bool Channel::getTopicOpOnly() const { return topicOpOnly; }
-
-void Channel::setTopicOpOnly(bool opOnly) { topicOpOnly = opOnly; }
 
 void Channel::setKey(const std::string& newKey)
 {

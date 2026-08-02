@@ -511,7 +511,13 @@ void Commands::handlePing(Client* client, const std::vector<std::string>& args)
 {
 	if (args.size() < 2)
 		return;
-	sendReply(client->getFd(), "PONG " + args[1]); 
+	
+	std::string token = args[1];
+
+	if (token[0] == ':')
+		token.erase(0, 1);
+	
+	sendReply(client->getFd(), ":ft_irc PONG ft_irc :" + token);
 }
 
 void Commands::handlePart(Client* client, const std::vector<std::string>& args, std::map<std::string, Channel*>& channels)

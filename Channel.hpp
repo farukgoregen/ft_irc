@@ -34,6 +34,7 @@ class Channel
 		void addOperator(Client* client);
 		void removeOperator(Client* client);
 		Client* getMember(const std::string& nick);
+		std::vector<Client*> getMembers() const;
 
 		bool isMember(Client* client) const;
 		bool isOperator(Client* client) const;

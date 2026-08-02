@@ -1,14 +1,14 @@
 #include "Commands.hpp"
 #include "Server.hpp"
 
-Commands::Commands(Server* server) : _server(server) {}
+Commands::Commands(Server* server) : server(server) {}
 
 Commands::~Commands() {}
 
 void Commands::sendReply(int fd, const std::string& reply)
 {
 	std::string msg = reply + "\r\n";
-	_server->sendData(fd, msg);
+	server->sendData(fd, msg);
 }
 
 std::vector<std::string> Commands::split(const std::string& str)
@@ -228,9 +228,25 @@ void Commands::handleJoin(Client* client, const std::vector<std::string>& args, 
 			ch->removeInvite(client->getNickname());
 	}
 
-	std::string joinMsg = ":" + client->getNickname() + " JOIN :" + chName;
-	channels[chName]->broadcast(joinMsg + "\r\n", client);
-	sendReply(client->getFd(), joinMsg);
+	std::string senderPrefix = ":" + client->getNickname() + "!" + client->getUsername() + "@" + client->getHostname();
+	std::string joinMsg = senderPrefix + " JOIN :" + chName;
+	
+	channels[chName]->broadcast(joinMsg + "\r\n", NULL);
+
+	Channel* ch = channels[chName];
+	std::string namesList = "";
+	std::vector<Client*> membersList = ch->getMembers(); 
+
+	for (size_t i = 0; i < membersList.size(); ++i)
+	{
+		if (ch->isOperator(membersList[i]))
+			namesList += "@" + membersList[i]->getNickname() + " ";
+		else
+			namesList += membersList[i]->getNickname() + " ";
+	}
+
+	sendReply(client->getFd(), ":ft_irc 353 " + client->getNickname() + " = " + chName + " :" + namesList);
+	sendReply(client->getFd(), ":ft_irc 366 " + client->getNickname() + " " + chName + " :End of /NAMES list");
 }
 
 void Commands::handlePrivmsg(Client* client, const std::vector<std::string>& args,
@@ -400,9 +416,11 @@ void Commands::handleInvite(Client* client, const std::vector<std::string>& args
 		return;
 	}
 
+	std::string senderPrefix = ":" + client->getNickname() + "!" + client->getUsername() + "@" + client->getHostname();
+	
 	ch->addInvite(targetNick);
 	sendReply(client->getFd(), "341 " + client->getNickname() + " " + targetNick + " " + chName);
-	sendReply(targetClient->getFd(), ":" + client->getNickname() + " INVITE " + targetNick + " :" + chName);
+	sendReply(targetClient->getFd(), senderPrefix + " INVITE " + targetNick + " :" + chName);
 }
 
 void Commands::handleTopic(Client* client, const std::vector<std::string>& args, std::map<std::string, Channel*>& channels)

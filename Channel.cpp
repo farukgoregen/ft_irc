@@ -60,6 +60,11 @@ Client* Channel::getMember(const std::string& nick)
 	return NULL;
 }
 
+std::vector<Client*> Channel::getMembers() const
+{
+	return members;
+}
+
 bool Channel::isMember(Client* client) const
 {
 	return std::find(members.begin(), members.end(), client) != members.end();

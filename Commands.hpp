@@ -12,7 +12,7 @@ class Server;
 class Commands
 {
 	private:
-		Server* _server;
+		Server* server;
 
 		std::vector<std::string> split(const std::string& str);
 		void sendReply(int fd, const std::string& reply);
